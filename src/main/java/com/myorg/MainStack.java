@@ -95,7 +95,7 @@ public class MainStack extends Stack {
                 .description("OpenSearch Node type")
                 .build();
 
-        this.dataNodesCount = CfnParameter.Builder.create(this, "osdfwOsdataNodesCount")
+        this.dataNodesCount = CfnParameter.Builder.create(this, "osdfwOsDataNodesCount")
                 .type("Number")
                 .defaultValue("1")
                 .description("OpenSearch Data Nodes count")
