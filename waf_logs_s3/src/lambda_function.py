@@ -3,30 +3,34 @@ import boto3
 import io
 import gzip
 import os
-import math
+import sys
 import json
 from requests_aws4auth import AWS4Auth
 import requests
+import logging
+from datetime import datetime
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 s3 = boto3.client('s3')
-firehose = boto3.client('firehose')
 event_client = boto3.client('events')
-firehose_stream_name = os.environ.get('FIREHOSE_STREAM_NAME')
+
 region = os.environ.get('REGION')
 os_endpoint = os.environ.get('OS_ENDPOINT')
 update_dashboards = False
+number_rows_in_batch = int(os.environ.get('NUMBER_ROWS_IN_BATCH'))
 
-def getExistingWebACLIDsFromOpenSearch():
+
+def getExistingWebACLIDsFromOpenSearch(os_endpoint, awsauth):
     """
     This function gets the existing web acl ids from the open search indices.
     
     """
     host = os_endpoint
     path = '/_cat/indices?format=json'
-    service = 'es'
-    credentials = boto3.Session().get_credentials()
-    awsauth = AWS4Auth(service=service, region=region, refreshable_credentials=credentials)
+
+
     url = "https://" + host + path
     r = requests.get(url, auth=awsauth)
     indices_json_details = r.json()
@@ -66,40 +70,32 @@ def sendEventToEventBus():
     except Exception as e:
         print(e)
         raise e
+    
+    logger.info("Event sent to event bus successfully")
 
 
-def putRecordToKinesisStream(streamName, record, client, attemptsMade, maxAttempts):
+def bulkPutRecordsToOpenSearch(os_endpoint, awsauth, records, index_name):
     """
-    This function puts a record to a Kinesis Data Stream.
-
-    @param streamName: The Kinesis Data Stream name.
-    @param record: The record to put to the Kinesis Data Stream.
-    @param client: The Kinesis Data Stream client.
-    @param attemptsMade: The number of times PutRecord has been attempted.
-    @param maxAttempts: The maximum number of times to attempt PutRecord.
+    This function puts a batch of records to the open search index.
+    
     """
-    failedRecord = []
-    codes = []
-    errMsg = ''
-
-    response = None
+    host = os_endpoint
+    path = '/'+ index_name.strip() + '/_bulk'
+    url = "https://" + host + path
+  
     try:
-        response = client.put_record(
-        DeliveryStreamName=streamName,
-        Record={
-                'Data': record
-            })
-    except Exception as e:
-        print(response)
-        failedRecord = record
-        errMsg = str(e)
+        #headers={'Content-Type': 'application/json'}
+        headers = {'Accept-Encoding': 'gzip', 'Content-Type': 'application/json', 'Content-Encoding': 'gzip'}
+        #data=records.encode('utf-8')
+        data=gzip.compress(records.encode('utf-8'))
 
-    if failedRecord:
-        if attemptsMade + 1 < maxAttempts:
-            print('Some record failed while calling PutRecord to Kinesis stream, retrying. %s' % (errMsg))
-            putRecordToKinesisStream(streamName, failedRecord, client, attemptsMade + 1, maxAttempts)
-        else:
-            raise RuntimeError('Could not put record after %s attempts. %s' % (str(maxAttempts), errMsg))
+        r = requests.post(url, auth=awsauth, data=records.encode('utf-8'), headers=headers)
+        logger.info("Response status code: %s", r.status_code)
+    except Exception as e:
+        logger.exception("Exception occurred while posting records to OpenSearch: %s", e)
+        raise e
+
+
 
 def lambda_handler(event, context):
     """
@@ -107,7 +103,11 @@ def lambda_handler(event, context):
     
     """
     update_dashboards = False
-    webaclIdSet = getExistingWebACLIDsFromOpenSearch()
+    service = 'es'
+    credentials = boto3.Session().get_credentials()
+    awsauth = AWS4Auth(service=service, region=region, refreshable_credentials=credentials)
+    webaclIdSet = getExistingWebACLIDsFromOpenSearch(os_endpoint, awsauth)
+    index_name = 'awswaf-' + datetime.now().strftime("%Y-%m-%d")   
 
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
@@ -115,16 +115,33 @@ def lambda_handler(event, context):
         response = s3.get_object(Bucket=bucket, Key=key)
         content = response['Body'].read()
         fobj=io.BytesIO(content)
+        l_cnt = 0
+        records = ""
         with gzip.open(fobj, mode='rt') as fh:
-            for l in fh:
-                l_json = json.loads(l)
-                if l_json['webaclId'] not in webaclIdSet:
-                    update_dashboards = True
-                putRecordToKinesisStream(firehose_stream_name, l.strip(), firehose, 1, 1) 
-        
+            lines = fh.readlines()
+            for l in lines:
+                l_cnt += 1
+                # detect only first new web acl id and update dashboards
+                if update_dashboards == False:
+                    l_json = json.loads(l)
+                    if l_json['webaclId'] not in webaclIdSet:
+                        logger.info("New web acl id detected")
+                        update_dashboards = True
+                records += '{"index": {}}\n' + l.strip() + '\n' 
+                if l_cnt % number_rows_in_batch == 0:
+                    bulkPutRecordsToOpenSearch(os_endpoint, awsauth, records, index_name)
+                    records = ""
+                    logger.info("Processed %s lines", l_cnt)
+
+        if records != "":
+            bulkPutRecordsToOpenSearch(os_endpoint, awsauth, records, index_name)
+            records = ""
+            
+        logger.info("All records processed: %s", l_cnt)
+
         if update_dashboards == True:
             sendEventToEventBus()
  
     except Exception as e:
-        print(e)
+        logger.exception("Exception occurred while processing the file: %s", e)
         raise e

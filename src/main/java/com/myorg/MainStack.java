@@ -376,13 +376,13 @@ public class MainStack extends Stack {
                 .role(s3SinkLambdaRole) 
                 .code(lambdaCodeLocation)
                 .runtime(Runtime.PYTHON_3_9)
-                .memorySize(128)
-                .timeout(Duration.seconds(160))
+                .memorySize(1024)
+                .timeout(Duration.minutes(5))
                 .environment(Map.of(
-                        "FIREHOSE_STREAM_NAME", this.streamStack.getFirehoseStreamName(),
                         "REGION", this.getRegion(),
                         "ACCOUNT_ID", this.getAccount(),
-                        "OS_ENDPOINT", this.openSearchDomain.getDomainEndpoint()
+                        "OS_ENDPOINT", this.openSearchDomain.getDomainEndpoint(),
+                        "NUMBER_ROWS_IN_BATCH", "1000"
                 ))
                 .retryAttempts(0)
                 .build();
