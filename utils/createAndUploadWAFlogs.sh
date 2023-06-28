@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# first command line argument as S3BUCKET
+S3BUCKET=$1
+
+LOG_LINE='{"timestamp":1687618587728,"formatVersion":1,"webaclId":"arn:aws:wafv2:us-east-1:162454757490:global/webacl/LogCDN_new7/91cbd8c2-4f7e-442d-983f-46df78ea6b22","terminatingRuleId":"Default_Action","terminatingRuleType":"REGULAR","action":"ALLOW","terminatingRuleMatchDetails":[],"httpSourceName":"CF","httpSourceId":"EF8CNDSUCBUC4","ruleGroupList":[{"ruleGroupId":"AWS#AWSManagedRulesAmazonIpReputationList","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesCommonRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesLinuxRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesUnixRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesSQLiRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null}],"rateBasedRuleList":[],"nonTerminatingMatchingRules":[],"requestHeadersInserted":null,"responseCodeSent":null,"httpRequest":{"clientIp":"15.177.6.73","country":"US","headers":[{"name":"Host","value":"spa.dns4.link"},{"name":"Connection","value":"close"},{"name":"User-Agent","value":"Amazon-Route53-Health-Check-Service (ref 72861777-9b28-4551-9ee4-d67cefcc5eab; report http://amzn.to/1vsZADi)"},{"name":"Accept","value":"*/*"},{"name":"Accept-Encoding","value":"identity,gzip,deflate"}],"uri":"/index.html","args":"","httpVersion":"HTTP/1.1","httpMethod":"GET","requestId":"Ce_Y8z6PpGTDgJU20_Ch60hBHmtd0mbXkNLlhG0ATnzYgds6dFr45Q=="}}'
+TIMESTAMP=$(date +%s)
+
+# Create temporary file 
+TEMPFILE=$(mktemp)
+mv $TEMPFILE $TEMPFILE.log
+TEMPFILE=$TEMPFILE.log
+
+cat >> $TEMPFILE <<EOF
+{"timestamp":${TIMESTAMP},"formatVersion":1,"webaclId":"arn:aws:wafv2:us-east-1:162454757490:global/webacl/LogCDN_${TIMESTAMP}/91cbd8c2-4f7e-442d-983f-46df78ea6b22","terminatingRuleId":"Default_Action","terminatingRuleType":"REGULAR","action":"ALLOW","terminatingRuleMatchDetails":[],"httpSourceName":"CF","httpSourceId":"EF8CNDSUCBUC4","ruleGroupList":[{"ruleGroupId":"AWS#AWSManagedRulesAmazonIpReputationList","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesCommonRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesLinuxRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesUnixRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesSQLiRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null}],"rateBasedRuleList":[],"nonTerminatingMatchingRules":[],"requestHeadersInserted":null,"responseCodeSent":null,"httpRequest":{"clientIp":"15.177.6.73","country":"US","headers":[{"name":"Host","value":"spa.dns4.link"},{"name":"Connection","value":"close"},{"name":"User-Agent","value":"Amazon-Route53-Health-Check-Service (ref 72861777-9b28-4551-9ee4-d67cefcc5eab; report http://amzn.to/1vsZADi)"},{"name":"Accept","value":"*/*"},{"name":"Accept-Encoding","value":"identity,gzip,deflate"}],"uri":"/index.html","args":"","httpVersion":"HTTP/1.1","httpMethod":"GET","requestId":"Ce_Y8z6PpGTDgJU20_Ch60hBHmtd0mbXkNLlhG0ATnzYgds6dFr45Q=="}}
+{"timestamp":${TIMESTAMP},"formatVersion":1,"webaclId":"arn:aws:wafv2:us-east-1:162454757490:global/webacl/LogCDN/91cbd8c2-4f7e-442d-983f-46df78ea6b22","terminatingRuleId":"Default_Action","terminatingRuleType":"REGULAR","action":"ALLOW","terminatingRuleMatchDetails":[],"httpSourceName":"CF","httpSourceId":"EF8CNDSUCBUC4","ruleGroupList":[{"ruleGroupId":"AWS#AWSManagedRulesAmazonIpReputationList","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesCommonRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesLinuxRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesUnixRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null},{"ruleGroupId":"AWS#AWSManagedRulesSQLiRuleSet","terminatingRule":null,"nonTerminatingMatchingRules":[],"excludedRules":null,"customerConfig":null}],"rateBasedRuleList":[],"nonTerminatingMatchingRules":[],"requestHeadersInserted":null,"responseCodeSent":null,"httpRequest":{"clientIp":"15.177.6.73","country":"US","headers":[{"name":"Host","value":"spa.dns4.link"},{"name":"Connection","value":"close"},{"name":"User-Agent","value":"Amazon-Route53-Health-Check-Service (ref 72861777-9b28-4551-9ee4-d67cefcc5eab; report http://amzn.to/1vsZADi)"},{"name":"Accept","value":"*/*"},{"name":"Accept-Encoding","value":"identity,gzip,deflate"}],"uri":"/index.html","args":"","httpVersion":"HTTP/1.1","httpMethod":"GET","requestId":"Ce_Y8z6PpGTDgJU20_Ch60hBHmtd0mbXkNLlhG0ATnzYgds6dFr45Q=="}}
+EOF
+
+#cat $TEMPFILE
+
+gzip $TEMPFILE
+
+GZTEMPFILE=${TEMPFILE}.gz
+
+aws s3 cp ${GZTEMPFILE} s3://${S3BUCKET}
+
+rm ${GZTEMPFILE}
