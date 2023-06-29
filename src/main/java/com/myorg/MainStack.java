@@ -90,8 +90,8 @@ public class MainStack extends Stack {
 
         this.nodeType = CfnParameter.Builder.create(this, "osdfwOsNodeSize")
                 .type("String")
-                .defaultValue(InstanceType.of(InstanceClass.MEMORY6_GRAVITON, InstanceSize.LARGE).toString())
-                //.allowedPattern(".*.search")
+                .defaultValue(InstanceType.of(InstanceClass.MEMORY6_GRAVITON, InstanceSize.LARGE).toString() + ".search")
+                .allowedPattern(".*.search")
                 .description("OpenSearch Node type")
                 .build();
 
