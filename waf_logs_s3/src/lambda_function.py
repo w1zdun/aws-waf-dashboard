@@ -88,9 +88,13 @@ def bulkPutRecordsToOpenSearch(os_endpoint, awsauth, records, index_name):
         headers = {'Accept-Encoding': 'gzip', 'Content-Type': 'application/json', 'Content-Encoding': 'gzip'}
         #data=records.encode('utf-8')
         data=gzip.compress(records.encode('utf-8'))
+        #data=records.encode('utf-8')
 
-        r = requests.post(url, auth=awsauth, data=records.encode('utf-8'), headers=headers)
-        logger.info("Response status code: %s", r.status_code)
+        r = requests.post(url, auth=awsauth, data=data, headers=headers)
+        if r.status_code != 200:
+            logger.warning("Response status code: %s", r.status_code)
+            logger.warning("Response content: %s", r.content)
+            #raise Exception("Response status code: %s" % r.status_code)
     except Exception as e:
         logger.exception("Exception occurred while posting records to OpenSearch: %s", e)
         raise e
