@@ -38,6 +38,7 @@ public class MainStack extends Stack {
     private CfnIdentityPool identityPool;
     private Role cognitoUserRole;
     private Role authenticatedUserRole;
+    private String bundleLambda;
 
 
     public MainStack(final Construct scope, final String id) {
@@ -55,7 +56,7 @@ public class MainStack extends Stack {
 
         StreamStackProps streamStackProps = new StreamStackProps(this.openSearchDomain);
         new StreamStack(this, "Stream", streamStackProps);
-        new AppStack(this, "App", streamStackProps);
+        new AppStack(this, "App", streamStackProps, this.bundleLambda);
 
         CfnOutput.Builder.create(this, "osdfwDashLink")
                 .description("Your link to the OpenSearch WAF Dashboard")
@@ -96,6 +97,8 @@ public class MainStack extends Stack {
                 //todo lowercase only allowed
                 .description("Name for Cognito Domain")
                 .build();
+                
+        this.bundleLambda = (String)this.getNode().tryGetContext("bundleLambda");
     }
 
     private void deployOpenSearch() {

@@ -78,6 +78,17 @@ To connect to AWS WAF logs
 3.	For Amazon Kinesis Data Firehose delivery stream, select the Kinesis Firehose that was created by the template in Step 1. Its name starts with aws-waf-logs. 
 4.	Save your changes.
 
+
+#### Bundle Lambda into zip packages
+To build new version of Lambdas zip archives that will be utilized in deployment local Docker system is requried. 
+By addding `-c bundleLambda=true` to `cdk deploy` dedicated logic will be activated that will pull requred docker image and will bundle new versions of Lambda archives.
+
+```
+cdk deploy -c bundleLambda=true
+```
+
+
+
 #### Final result
 That's all! Now, your WAF logs will be send from WAF service throug Kinesis Firehose directly to the OpenSearch cluster and will become available to you using OpenSearch dashboards. After a couple of minutes, you should start seeing that your dashboards have got data on it.
 
